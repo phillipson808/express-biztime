@@ -3,8 +3,6 @@ const router = new express.Router();
 const ExpressError = require("../expressError");
 const db = require("../db");
 
-
-
 router.get('/', async function(req, res, next){
     try{
         const results = await db.query(
@@ -16,15 +14,29 @@ router.get('/', async function(req, res, next){
 })
 
 router.get('/:code', async function(req, res, next){
-    //Throw a 404 if the company doesn't exist. Right now we get a 200.
-    try{
-        const results = await db.query(
-            `SELECT * FROM companies WHERE code=$1`, [req.params.code]);
-        if(results.rows.length === 0){
+    try {
+        const company = await db.query(
+            `SELECT *
+             FROM companies
+             WHERE code=$1`, [req.params.code]
+        );
+        if (company.rows.length === 0){
             throw new ExpressError('Invalid code', 404);
         }
-        return res.json({company: results.rows[0]});
-    }catch(err){
+        const invoices = await db.query(
+            `SELECT *
+             FROM invoices
+             WHERE comp_code=$1`, [req.params.code]
+        )
+        const { code, name, description } = company.rows[0];
+        const results = {
+            code,
+            name,
+            description,
+            invoices: invoices.rows
+        };
+        return res.json({ company: results });
+    } catch(err) {
         return next(err);
     }
 })
@@ -44,7 +56,6 @@ router.post('/', async function(req, res, next){
 })
 
 router.put('/:code', async function(req, res, next){
-    //Add 404 for unmatched inputs.
     try{
         const code = req.params.code;
         const { name, description } = req.body;
@@ -76,8 +87,5 @@ router.delete('/:code', async function(req, res, next){
         return next(err);
     }
 })
-
-
-
 
 module.exports = router;
