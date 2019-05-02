@@ -18,12 +18,11 @@ router.get('/', async function(req, res, next){
 router.get('/:code', async function(req, res, next){
     //Throw a 404 if the company doesn't exist. Right now we get a 200.
     try{
-        const code = req.params.code;
         const results = await db.query(
-            `SELECT * FROM companies WHERE code=$1`, [code]);
-            if(results.rows.length === 0){
-                throw new ExpressError('Invalid code', 404);
-            }
+            `SELECT * FROM companies WHERE code=$1`, [req.params.code]);
+        if(results.rows.length === 0){
+            throw new ExpressError('Invalid code', 404);
+        }
         return res.json({company: results.rows[0]});
     }catch(err){
         return next(err);

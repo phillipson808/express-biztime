@@ -7,21 +7,23 @@ const db = require("../db");
 
 router.get('/', async function(req, res, next){
     try{
-        const { code, name } = req.body;
         const results = await db.query(
-            `SELECT code, name FROM companies`);
+            `SELECT id, comp_code FROM invoices`);
         return res.json(results.rows);
     }catch(err){
         return next(err);
     }
 })
 
-router.get('/:code', async function(req, res, next){
+router.get('/:id', async function(req, res, next){
     try{
-        const code = req.params.code;
         const results = await db.query(
-            `SELECT * FROM companies WHERE code=$1`, [code]);
-        return res.json(results.rows);
+            `SELECT * FROM invoices WHERE id=$1`, [req.params.id]
+        );
+        if(results.rows.length === 0){
+            throw new ExpressError('Invalid code', 404);
+        }
+        return res.json({invoice: results.rows[0]});
     }catch(err){
         return next(err);
     }
